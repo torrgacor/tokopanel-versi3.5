@@ -1,6 +1,6 @@
 "use server"
 
-import { calculateFee, generateTransactionId, calculateDiscount, applyDiscount } from "@/lib/utils"
+import { calculateFee, generateTransactionId, calculateDiscount, formatRupiah } from "@/lib/utils"
 import { plans } from "@/data/plans"
 import { Pterodactyl, EggOption } from "@/lib/pterodactyl"
 import { revalidatePath } from "next/cache"
@@ -10,8 +10,6 @@ import type { ObjectId } from "mongodb"
 import crypto from "crypto"
 import { validateVoucher, markVoucherAsUsed, type Voucher } from "@/app/actions/voucher-actions"
 
-const SAKURU_API_ID = appConfig.pay.api_id
-const SAKURU_API_KEY = appConfig.pay.api_key
 const SAKURU_API_URL = "https://sakurupiah.id/api/create.php"
 
 export interface PaymentData {
@@ -56,14 +54,20 @@ export async function createPayment(data: {
   try {
     const { planId, username, email, serverType, accessType, quantity = 1 } = data
 
-    let eggPrice = 0
+    const SAKURU_API_ID = appConfig.pay.api_id
+    const SAKURU_API_KEY = appConfig.pay.api_key
+    if (!SAKURU_API_ID || !SAKURU_API_KEY) {
+      throw new Error("Sakurupiah API credentials belum disetel")
+    }
 
-if (data.selectedEggId) {
-  const pterodactyl = new Pterodactyl(serverType, accessType)
-  const eggs = await pterodactyl.getEggs()
-  const selectedEgg = eggs.find(e => e.id === data.selectedEggId)
-  eggPrice = selectedEgg?.harga || 0
-}
+    let eggPrice = 0
+    if (data.selectedEggId) {
+      const pterodactylAccessType = accessType === "admin" ? "admin" : "reguler"
+      const pterodactyl = new Pterodactyl(serverType, pterodactylAccessType)
+      const eggs = await pterodactyl.getEggs()
+      const selectedEgg = eggs.find((e) => e.id === data.selectedEggId)
+      eggPrice = selectedEgg?.harga || 0
+    }
       
     const plan = plans.find((p) => p.id === planId)
     if (!plan) throw new Error("Plan tidak ditemukan")
@@ -79,11 +83,16 @@ if (data.selectedEggId) {
     let discountAmount = 0
     let discountType: "percentage" | "nominal" | undefined
     let discountValue: number | undefined
-    
+    let voucherCode: string | undefined
+
     if (data.voucherCode) {
       const voucherValidation = await validateVoucher(data.voucherCode)
-      if (voucherValidation.success) {
+      if (voucherValidation.success && voucherValidation.voucher) {
         const voucher = voucherValidation.voucher
+        voucherCode = voucher.code
+        if (voucher.minimumPurchase && basePrice < voucher.minimumPurchase) {
+          throw new Error(`Voucher ini berlaku untuk pembelian minimal ${formatRupiah(voucher.minimumPurchase)}`)
+        }
         discountType = voucher.discountType
         discountValue = voucher.discountValue
         discountAmount = calculateDiscount(basePrice, discountType, discountValue)

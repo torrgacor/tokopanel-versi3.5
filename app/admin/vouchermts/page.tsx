@@ -77,6 +77,8 @@ export default function AdminVoucherManagementPage() {
     code: "",
     discountValue: "",
     maxUses: "",
+    minimumPurchase: "",
+    downloadUrl: "",
     expiryDate: "",
     description: "",
   })
@@ -191,6 +193,8 @@ export default function AdminVoucherManagementPage() {
         discountType,
         discountValue,
         maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
+        minimumPurchase: formData.minimumPurchase ? parseInt(formData.minimumPurchase) : undefined,
+        downloadUrl: formData.downloadUrl ? formData.downloadUrl.trim() : undefined,
         expiryDate: formData.expiryDate || undefined,
         description: formData.description || undefined,
       })
@@ -232,6 +236,8 @@ export default function AdminVoucherManagementPage() {
       code: voucher.code,
       discountValue: voucher.discountValue.toString(),
       maxUses: voucher.maxUses?.toString() || "",
+      minimumPurchase: voucher.minimumPurchase?.toString() || "",
+      downloadUrl: voucher.downloadUrl || "",
       expiryDate: voucher.expiryDate ? new Date(voucher.expiryDate).toISOString().split("T")[0] : "",
       description: voucher.description || "",
     })
@@ -248,6 +254,8 @@ export default function AdminVoucherManagementPage() {
       const result = await updateVoucher(editingVoucher._id, {
         discountValue: parseFloat(formData.discountValue),
         maxUses: formData.maxUses ? parseInt(formData.maxUses) : null,
+        minimumPurchase: formData.minimumPurchase ? parseInt(formData.minimumPurchase) : null,
+        downloadUrl: formData.downloadUrl ? formData.downloadUrl.trim() : null,
         expiryDate: formData.expiryDate || null,
         description: formData.description || undefined,
       })
@@ -701,6 +709,37 @@ export default function AdminVoucherManagementPage() {
                         className="bg-dark-500 border-dark-200 text-white placeholder:text-dark-100"
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="minimumPurchase" className="text-white font-medium">
+                        Pembelian Minimum (Opsional)
+                      </Label>
+                      <Input
+                        id="minimumPurchase"
+                        name="minimumPurchase"
+                        type="number"
+                        placeholder="Contoh: 50000"
+                        value={formData.minimumPurchase}
+                        onChange={handleInputChange}
+                        disabled={isSubmitting}
+                        min="0"
+                        className="bg-dark-500 border-dark-200 text-white placeholder:text-dark-100"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="downloadUrl" className="text-white font-medium">
+                        Link Unduhan File (Opsional)
+                      </Label>
+                      <Input
+                        id="downloadUrl"
+                        name="downloadUrl"
+                        type="url"
+                        placeholder="Contoh: https://example.com/file.zip"
+                        value={formData.downloadUrl}
+                        onChange={handleInputChange}
+                        disabled={isSubmitting}
+                        className="bg-dark-500 border-dark-200 text-white placeholder:text-dark-100"
+                      />
+                    </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="expiryDate" className="text-white font-medium">
@@ -800,6 +839,38 @@ export default function AdminVoucherManagementPage() {
               </div>
 
               <div className="space-y-2">
+                <Label className="text-white">Pembelian Minimum</Label>
+                <Input
+                  type="number"
+                  value={formData.minimumPurchase}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      minimumPurchase: e.target.value,
+                    }))
+                  }
+                  placeholder="Contoh: 50000"
+                  className="bg-dark-500 border-dark-200 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-white">Link Unduhan File</Label>
+                <Input
+                  type="url"
+                  value={formData.downloadUrl}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      downloadUrl: e.target.value,
+                    }))
+                  }
+                  placeholder="Contoh: https://example.com/file.zip"
+                  className="bg-dark-500 border-dark-200 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label className="text-white">Expiry Date</Label>
                 <Input
                   type="date"
@@ -875,32 +946,26 @@ export default function AdminVoucherManagementPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Penggunaan</p>
+                  <p className="text-sm text-gray-400">Pembelian Minimum</p>
                   <p className="font-medium">
-                    {viewingVoucher?.currentUses}/{viewingVoucher?.maxUses || "∞"}
+                    {viewingVoucher?.minimumPurchase ? formatRupiah(viewingVoucher.minimumPurchase) : "Tidak ada"}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-400">Status</p>
                   <p className="font-medium">{viewingVoucher?.active ? "Aktif" : "Inactive"}</p>
                 </div>
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">Riwayat Penggunaan</h4>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {usageDetails.length === 0 ? (
-                    <p className="text-sm text-gray-400">Belum ada yang claim</p>
-                  ) : (
-                    usageDetails.map((usage, idx) => (
-                      <div key={idx} className="text-sm bg-dark-500 p-2 rounded flex justify-between">
-                        <span>{usage.userId}</span>
-                        <span className={usage.used ? "text-green-400" : "text-gray-400"}>
-                          {usage.used ? "Terpakai" : "Belum dipakai"}
-                        </span>
-                      </div>
-                    ))
-                  )}
+                <div>
+                  <p className="text-sm text-gray-400">Link Unduhan</p>
+                  <p className="font-medium break-all">
+                    {viewingVoucher?.downloadUrl ? (
+                      <a href={viewingVoucher.downloadUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-300 hover:text-emerald-200">
+                        Lihat file
+                      </a>
+                    ) : (
+                      "Tidak ada"
+                    )}
+                  </p>
                 </div>
               </div>
             </div>

@@ -14,6 +14,8 @@ interface VoucherInput {
   code: string
   discountType: DiscountType
   discountValue: number
+  minimumPurchase?: number
+  downloadUrl?: string
   description?: string
 }
 
@@ -50,6 +52,8 @@ export function VoucherInput({ userIdentifier, onVoucherApplied, onVoucherRemove
           code: result.voucher!.code,
           discountType: result.voucher!.discountType,
           discountValue: result.voucher!.discountValue,
+          minimumPurchase: result.voucher!.minimumPurchase,
+          downloadUrl: result.voucher!.downloadUrl,
           description: result.voucher!.description,
         }
         setAppliedVoucher(voucher)
@@ -60,6 +64,18 @@ export function VoucherInput({ userIdentifier, onVoucherApplied, onVoucherRemove
           variant: "default",
         })
         onVoucherApplied?.(voucher)
+        if (voucher.downloadUrl) {
+          const anchor = document.createElement("a")
+          anchor.href = voucher.downloadUrl
+          anchor.target = "_blank"
+          anchor.rel = "noopener noreferrer"
+          if (voucher.downloadUrl.endsWith(".pdf") || voucher.downloadUrl.endsWith(".zip") || voucher.downloadUrl.endsWith(".txt") || voucher.downloadUrl.endsWith(".jpg") || voucher.downloadUrl.endsWith(".png")) {
+            anchor.download = ""
+          }
+          document.body.appendChild(anchor)
+          anchor.click()
+          document.body.removeChild(anchor)
+        }
       } else {
         setError(result.message)
         toast({

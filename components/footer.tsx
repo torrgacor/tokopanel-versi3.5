@@ -1,9 +1,16 @@
+"use client"
+
+import { useCallback } from "react"
 import Link from "next/link"
 import { ShoppingCart } from "lucide-react"
 import { appConfig } from "@/data/config"
+import { Button } from "@/components/ui/button"
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
+  const handleFooterButtonClick = useCallback(() => {
+    window.open(appConfig.socialMedia.whatsapp, "_blank", "noopener,noreferrer")
+  }, [])
 
   return (
     <footer className="bg-dark-600 border-t border-dark-500">

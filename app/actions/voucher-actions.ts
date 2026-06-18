@@ -12,6 +12,8 @@ export interface Voucher {
   discountValue: number // Persentase (0-100) atau nominal (Rp)
   maxUses?: number
   currentUses: number
+  minimumPurchase?: number
+  downloadUrl?: string
   expiryDate?: Date
   active: boolean
   createdAt: Date
@@ -34,6 +36,8 @@ export async function createVoucher(data: {
   discountType: DiscountType
   discountValue: number
   maxUses?: number
+  minimumPurchase?: number
+  downloadUrl?: string
   expiryDate?: string
   description?: string
 }) {
@@ -57,12 +61,18 @@ export async function createVoucher(data: {
       throw new Error("Nominal diskon tidak boleh negatif")
     }
 
+    if (!data.downloadUrl && data.discountValue <= 0) {
+      throw new Error("Nilai diskon harus lebih besar dari 0 atau berikan link unduhan")
+    }
+
     const voucher: Voucher = {
       code: data.code.toUpperCase(),
       discountType: data.discountType,
       discountValue: data.discountValue,
       maxUses: data.maxUses,
       currentUses: 0,
+      minimumPurchase: data.minimumPurchase,
+      downloadUrl: data.downloadUrl?.trim() || undefined,
       expiryDate: data.expiryDate ? new Date(data.expiryDate) : undefined,
       active: true,
       createdAt: new Date(),
@@ -140,6 +150,8 @@ export async function claimVoucher(data: { userIdentifier: string; code: string 
         code: voucher.code,
         discountType: voucher.discountType,
         discountValue: voucher.discountValue,
+        minimumPurchase: voucher.minimumPurchase,
+        downloadUrl: voucher.downloadUrl,
         description: voucher.description,
       },
     }
@@ -218,6 +230,8 @@ export async function validateVoucher(code: string) {
         code: voucher.code,
         discountType: voucher.discountType,
         discountValue: voucher.discountValue,
+        minimumPurchase: voucher.minimumPurchase,
+        downloadUrl: voucher.downloadUrl,
         description: voucher.description,
       },
     }
@@ -376,6 +390,8 @@ export async function updateVoucher(
   data: {
     discountValue?: number
     maxUses?: number | null
+    minimumPurchase?: number | null
+    downloadUrl?: string | null
     expiryDate?: string | null
     description?: string
     active?: boolean
@@ -399,6 +415,12 @@ export async function updateVoucher(
     }
     if (data.description !== undefined) {
       updateData.description = data.description
+    }
+    if (data.minimumPurchase !== undefined) {
+      updateData.minimumPurchase = data.minimumPurchase
+    }
+    if (data.downloadUrl !== undefined) {
+      updateData.downloadUrl = data.downloadUrl?.trim() ? data.downloadUrl.trim() : null
     }
     if (data.active !== undefined) {
       updateData.active = data.active
