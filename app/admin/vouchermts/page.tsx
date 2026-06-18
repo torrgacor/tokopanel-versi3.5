@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -71,6 +72,10 @@ export default function AdminVoucherManagementPage() {
   const [stats, setStats] = useState<any>(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+
+  const router = useRouter()
 
   // Form state
   const [formData, setFormData] = useState({
@@ -96,11 +101,42 @@ export default function AdminVoucherManagementPage() {
 
   const { toast } = useToast()
 
+  const handleLogout = () => {
+    window.localStorage.removeItem("adminAuthenticated")
+    router.push("/admin")
+  }
+
+  useEffect(() => {
+    const authValue = window.localStorage.getItem("adminAuthenticated")
+    if (authValue === "true") {
+      setIsAuthenticated(true)
+    } else {
+      router.replace("/admin")
+    }
+    setIsCheckingAuth(false)
+  }, [router])
+
   // Load data
   useEffect(() => {
+    if (!isAuthenticated) {
+      return
+    }
+
     loadVouchers()
     loadStatistics()
-  }, [page, searchTerm, filterStatus])
+  }, [page, searchTerm, filterStatus, isAuthenticated])
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-dark-950 text-white">
+        <p className="text-lg">Memeriksa autentikasi...</p>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return null
+  }
 
   const loadVouchers = async () => {
     setIsLoading(true)
@@ -346,9 +382,14 @@ export default function AdminVoucherManagementPage() {
     <div className="min-h-screen bg-gradient-to-br from-dark-500 via-dark-700 to-dark-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Manajemen Voucher Admin</h1>
-          <p className="text-gray-400">Kelola dan monitoring semua voucher diskon</p>
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">Manajemen Voucher Admin</h1>
+            <p className="text-gray-400">Kelola dan monitoring semua voucher diskon</p>
+          </div>
+          <Button onClick={handleLogout} className="self-start bg-red-600 hover:bg-red-700 text-white">
+            Logout
+          </Button>
         </div>
 
         {/* Tabs */}
