@@ -159,6 +159,9 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
+            </div>
+           </div>
+        
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6 gap-4">
             <div className="flex space-x-6">
               </div>
