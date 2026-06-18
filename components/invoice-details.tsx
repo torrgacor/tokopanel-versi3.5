@@ -1,10 +1,11 @@
 "use client"
 
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatRupiah, formatDate } from "@/lib/utils"
 import { plans } from "@/data/plans"
 import { motion } from "framer-motion"
-import { Clock, CheckCircle, AlertTriangle, Loader2, User, Mail, Package, Calendar, CreditCard, Layers } from "lucide-react"
+import { Clock, CheckCircle, AlertTriangle, Loader2, User, Mail, Package, Calendar, CreditCard, Layers, Download } from "lucide-react"
 
 interface InvoiceDetailsProps {
   transactionId: string
@@ -19,7 +20,8 @@ interface InvoiceDetailsProps {
   selectedEggId?: number
   selectedEggName?: string
   selectedEggPrice?: number
-  quantity?: number 
+  quantity?: number
+  voucherDownloadUrl?: string
 }
 
 export function InvoiceDetails({
@@ -35,7 +37,8 @@ export function InvoiceDetails({
   selectedEggId,
   selectedEggName,
   selectedEggPrice = 0,
-  quantity = 1, 
+  quantity = 1,
+  voucherDownloadUrl,
 }: InvoiceDetailsProps) {
   const plan = plans.find((p) => p.id === planId)
 
@@ -192,6 +195,23 @@ export function InvoiceDetails({
               )}
             </div>
           </div>
+
+          {status === "completed" && voucherDownloadUrl ? (
+            <div className="p-5 border-t border-dark-300">
+              <p className="text-sm text-gray-400 mb-3">Transaksi berhasil. Klik tombol berikut untuk mengunduh voucher atau berkas terkait.</p>
+              <a
+                href={voucherDownloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block"
+              >
+                <Button className="w-full md:w-auto px-6" size="lg">
+                  <Download className="w-4 h-4 mr-2" />
+                  Unduh Voucher
+                </Button>
+              </a>
+            </div>
+          ) : null}
 
           <div className="p-5">
             <h4 className="text-sm uppercase text-gray-400 mb-3 font-medium">Ringkasan Pembayaran</h4>

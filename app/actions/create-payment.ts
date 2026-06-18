@@ -30,6 +30,7 @@ export interface PaymentData {
   createdAt: string
   selectedEggId?: number
   voucherCode?: string
+  voucherDownloadUrl?: string
   discountType?: "percentage" | "nominal"
   discountValue?: number
   discountAmount?: number
@@ -84,12 +85,14 @@ export async function createPayment(data: {
     let discountType: "percentage" | "nominal" | undefined
     let discountValue: number | undefined
     let voucherCode: string | undefined
+    let voucherDownloadUrl: string | undefined
 
     if (data.voucherCode) {
       const voucherValidation = await validateVoucher(data.voucherCode)
       if (voucherValidation.success && voucherValidation.voucher) {
         const voucher = voucherValidation.voucher
         voucherCode = voucher.code
+        voucherDownloadUrl = voucher.downloadUrl
         if (voucher.minimumPurchase && basePrice < voucher.minimumPurchase) {
           throw new Error(`Voucher ini berlaku untuk pembelian minimal ${formatRupiah(voucher.minimumPurchase)}`)
         }
@@ -177,6 +180,7 @@ export async function createPayment(data: {
       createdAt: new Date().toISOString(),
       selectedEggId: data.selectedEggId ?? null,
       voucherCode: data.voucherCode,
+      voucherDownloadUrl,
       quantity,
       discountType,
       discountValue,

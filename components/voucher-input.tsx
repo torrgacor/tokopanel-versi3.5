@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { claimVoucher, validateVoucher, type DiscountType } from "@/app/actions/voucher-actions"
+import { claimVoucher, type DiscountType } from "@/app/actions/voucher-actions"
 import { useToast } from "@/hooks/use-toast"
 import { Check, Loader2, Ticket, AlertCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -64,18 +64,6 @@ export function VoucherInput({ userIdentifier, onVoucherApplied, onVoucherRemove
           variant: "default",
         })
         onVoucherApplied?.(voucher)
-        if (voucher.downloadUrl) {
-          const anchor = document.createElement("a")
-          anchor.href = voucher.downloadUrl
-          anchor.target = "_blank"
-          anchor.rel = "noopener noreferrer"
-          if (voucher.downloadUrl.endsWith(".pdf") || voucher.downloadUrl.endsWith(".zip") || voucher.downloadUrl.endsWith(".txt") || voucher.downloadUrl.endsWith(".jpg") || voucher.downloadUrl.endsWith(".png")) {
-            anchor.download = ""
-          }
-          document.body.appendChild(anchor)
-          anchor.click()
-          document.body.removeChild(anchor)
-        }
       } else {
         setError(result.message)
         toast({

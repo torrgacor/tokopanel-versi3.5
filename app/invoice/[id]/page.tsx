@@ -61,6 +61,7 @@ export default async function InvoicePage({ params }: { params: { id: string } }
               selectedEggName={selectedEggName}
               selectedEggPrice={selectedEggPrice}
               quantity={payment.quantity}
+              voucherDownloadUrl={payment.voucherDownloadUrl}
             />
 
             <QrPayment
