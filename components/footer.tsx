@@ -166,14 +166,6 @@ export function Footer() {
           <p className="text-gray-400 text-sm">
             &copy; {currentYear} {appConfig.nameHost}. All rights reserved.
           </p>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6 gap-4">
-            <div className="flex space-x-6">
-              <Link href="/" className="text-gray-400 hover:text-red-500 transition-colors text-sm">
-                Syarat & Ketentuan
-              </Link>
-              <Link href="/" className="text-gray-400 hover:text-red-500 transition-colors text-sm">
-                Kebijakan Privasi
-              </Link>
             </div>
             <Button onClick={handleFooterButtonClick} className="bg-red-500 hover:bg-red-600 text-white">
               Hubungi Kami
