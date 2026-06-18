@@ -172,22 +172,17 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-dark-500 mt-8 pt-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <p className="text-gray-400 text-sm">
+        <div className="border-t border-dark-500 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+          <p className="text-gray-400 text-sm mb-4 md:mb-0">
             &copy; {currentYear} {appConfig.nameHost}. All rights reserved.
           </p>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6 gap-4">
-            <div className="flex space-x-6">
-              <Link href="/" className="text-gray-400 hover:text-red-500 transition-colors text-sm">
-                Syarat & Ketentuan
-              </Link>
-              <Link href="/" className="text-gray-400 hover:text-red-500 transition-colors text-sm">
-                Kebijakan Privasi
-              </Link>
-            </div>
-            <Button onClick={handleFooterButtonClick} className="bg-red-500 hover:bg-red-600 text-white">
-              Hubungi Kami
-            </Button>
+          <div className="flex space-x-6">
+            <Link href="/" className="text-gray-400 hover:text-red-500 transition-colors text-sm">
+              Syarat & Ketentuan
+            </Link>
+            <Link href="/" className="text-gray-400 hover:text-red-500 transition-colors text-sm">
+              Kebijakan Privasi
+            </Link>
           </div>
         </div>
       </div>
