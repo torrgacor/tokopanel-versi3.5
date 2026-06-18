@@ -166,9 +166,12 @@ export function Footer() {
           <p className="text-gray-400 text-sm">
             &copy; {currentYear} {appConfig.nameHost}. All rights reserved.
           </p>
-            
           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6 gap-4">
             <div className="flex space-x-6">
+              <Button onClick={handleFooterButtonClick} className="bg-red-500 hover:bg-red-600 text-white">
+              Hubungi Kami
+            </Button>
+            </div>
             <Button onClick={handleFooterButtonClick} className="bg-red-500 hover:bg-red-600 text-white">
               Hubungi Kami
             </Button>
