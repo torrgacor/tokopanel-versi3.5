@@ -221,10 +221,6 @@ export default function PanelForm() {
     setShowConfirmation(true)
   }
 
-  const handleFooterInfoClick = () => {
-    window.open(appConfig.socialMedia.whatsapp, "_blank", "noopener,noreferrer")
-  }
-
   const handleConfirm = async () => {
     setIsLoading(true)
 
@@ -545,33 +541,23 @@ export default function PanelForm() {
             exit={{ y: 100 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="space-y-3">
-              <Button
-                type="button"
-                onClick={handleFooterInfoClick}
-                className="w-full h-12 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 font-medium flex items-center justify-center gap-2 rounded-lg transition-all duration-200"
-              >
-                <MessageSquare className="w-4 h-4 text-emerald-400" />
-                Informasi Server
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                className="w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 h-14 text-lg font-medium transition-all duration-300 ease-in-out transform hover:scale-[1.02] shadow-2xl"
-                disabled={isValidating}
-              >
-                {isValidating ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Memeriksa...
-                  </>
-                ) : (
-                  <>
-                    <Settings className="mr-2 h-5 w-5" />
-                    Beli Sekarang
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              onClick={handleSubmit}
+              className="w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 h-14 text-lg font-medium transition-all duration-300 ease-in-out transform hover:scale-[1.02] shadow-2xl"
+              disabled={isValidating}
+            >
+              {isValidating ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Memeriksa...
+                </>
+              ) : (
+                <>
+                  <Settings className="mr-2 h-5 w-5" />
+                  Beli Sekarang
+                </>
+              )}
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>
