@@ -51,7 +51,7 @@ export default function AdminLoginPage() {
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="akuntorry01@gmail.com"
+                placeholder="Masukkan Email"
                 required
                 className="bg-dark-500 border-dark-200 text-white"
               />
@@ -63,7 +63,7 @@ export default function AdminLoginPage() {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Masukkan password"
+                placeholder="Masukkan Password"
                 required
                 className="bg-dark-500 border-dark-200 text-white"
               />
