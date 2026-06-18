@@ -165,6 +165,7 @@ export function Footer() {
          <div className="border-t border-dark-500 mt-8 pt-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6 gap-4">
             <div className="flex space-x-6">
+            </div>
             <Button onClick={handleFooterButtonClick} className="bg-red-500 hover:bg-red-600 text-white">
               Hubungi Kami
             </Button>
