@@ -591,7 +591,7 @@ export default function PanelForm() {
         selectedEggId={selectedEggId}
         eggs={eggs}
         quantity={quantity}
-        userIdentifier={email || username}
+        userIdentifier={username}
         appliedVoucher={appliedVoucher}
         onVoucherApplied={setAppliedVoucher}
         onVoucherRemoved={() => setAppliedVoucher(null)}

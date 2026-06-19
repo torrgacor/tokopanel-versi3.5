@@ -244,34 +244,50 @@ export async function validateVoucher(code: string) {
 }
 
 // Mark voucher as used
-export async function markVoucherAsUsed(userIdentifier: string, code: string) {
+export async function markVoucherAsUsed(userIdentifier: string | undefined, code: string) {
   try {
     const client = await clientPromise
     const db = client.db("pterodactyl")
     const userVouchersCollection = db.collection<UserVoucher>("userVouchers")
     const vouchersCollection = db.collection<Voucher>("vouchers")
 
-    // Update user voucher
-    const result = await userVouchersCollection.updateOne(
-      {
-        userId: userIdentifier,
-        code: code.toUpperCase(),
-        used: false,
-      },
+    const codeUpper = code.toUpperCase()
+    let query: any = {
+      code: codeUpper,
+      used: false,
+    }
+
+    if (userIdentifier) {
+      query.userId = userIdentifier
+    }
+
+    let result = await userVouchersCollection.updateOne(
+      query,
       {
         $set: { used: true, usedAt: new Date() },
       }
     )
 
-    if (result.modifiedCount === 0) {
-      throw new Error("Voucher tidak ditemukan")
+    if (result.modifiedCount === 0 && userIdentifier) {
+      result = await userVouchersCollection.updateOne(
+        {
+          code: codeUpper,
+          used: false,
+        },
+        {
+          $set: { used: true, usedAt: new Date() },
+        }
+      )
     }
 
-    // Increment voucher usage
-    await vouchersCollection.updateOne(
-      { code: code.toUpperCase() },
+    const voucherUpdateResult = await vouchersCollection.updateOne(
+      { code: codeUpper, active: true },
       { $inc: { currentUses: 1 } }
     )
+
+    if (voucherUpdateResult.matchedCount === 0) {
+      throw new Error("Voucher tidak ditemukan")
+    }
 
     return { success: true }
   } catch (error) {
