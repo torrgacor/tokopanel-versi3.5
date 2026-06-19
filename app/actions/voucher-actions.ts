@@ -129,7 +129,7 @@ export async function claimVoucher(data: { userIdentifier: string; code: string 
     })
 
     if (alreadyClaimed) {
-      throw new Error("Anda sudah pernah claim voucher ini")
+      throw new Error("Username yang digunakan sudah pernah claim voucher ini, ubah dengan Username lain")
     }
 
     // Add to user vouchers
