@@ -3,11 +3,23 @@ import mongoClient from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 import { appConfig } from "@/data/config"
 
+function isAdminAuthorized(request: NextRequest) {
+  const adminCookie = request.cookies.get("adminAuth")?.value
+  const headerToken = request.headers.get("x-admin-token")
+  const adminSecret = process.env.ADMIN_SECRET || ""
+
+  if (!adminSecret) return false
+  return adminCookie === adminSecret || headerToken === adminSecret
+}
+
 /**
  * GET /api/admin/withdrawals
  * Ambil daftar semua withdrawal
  */
 export async function GET(request: NextRequest) {
+  if (!isAdminAuthorized(request)) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+  }
   try {
     const client = await mongoClient
     const db = client.db(appConfig.mongodb.dbName)
@@ -37,6 +49,9 @@ export async function GET(request: NextRequest) {
  * Update status withdrawal
  */
 export async function PUT(request: NextRequest) {
+  if (!isAdminAuthorized(request)) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+  }
   try {
     const client = await mongoClient
     const db = client.db(appConfig.mongodb.dbName)
