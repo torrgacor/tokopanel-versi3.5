@@ -91,6 +91,63 @@ export default function ResellerDashboard() {
     return null
   }
 
+  if (profile && profile.verificationStatus !== "verified") {
+    return (
+      <div className="container py-10 space-y-8">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-4xl font-bold">Dashboard Reseller</h1>
+          <p className="text-muted-foreground">Status akun reseller Anda</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Status Verifikasi</CardTitle>
+            <CardDescription>
+              Akun reseller Anda harus diverifikasi oleh admin sebelum dapat melakukan penjualan atau menerima komisi.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-xl border border-muted p-6 bg-muted/10">
+              <p className="text-sm text-muted-foreground">Status saat ini:</p>
+              <p className="text-xl font-semibold capitalize">
+                {profile.verificationStatus === "pending" ? "Menunggu Verifikasi" : "Ditolak"}
+              </p>
+              {profile.verificationStatus === "rejected" && profile.rejectionReason ? (
+                <p className="mt-2 text-sm text-destructive">Alasan penolakan: {profile.rejectionReason}</p>
+              ) : (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Silakan tunggu admin untuk memverifikasi profil reseller Anda.
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-muted p-6 bg-muted/10">
+              <h2 className="text-lg font-semibold">Informasi Akun</h2>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Nama Bisnis</p>
+                  <p className="font-medium">{profile.businessName || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Username</p>
+                  <p className="font-medium">{profile.username}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium text-sm">{profile.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">No Telepon</p>
+                  <p className="font-medium">{profile.phoneNumber || "-"}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="container py-10 space-y-8">
       <div className="flex flex-col gap-2">

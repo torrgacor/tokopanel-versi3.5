@@ -60,6 +60,7 @@ import {
   Search,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { AdminNavigation } from "@/components/admin-navigation"
 
 type VoucherWithId = Voucher & { _id: string }
 
@@ -407,6 +408,8 @@ export default function AdminVoucherManagementPage() {
             Logout
           </Button>
         </div>
+
+        <AdminNavigation />
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6">

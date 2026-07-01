@@ -76,6 +76,16 @@ export default function ResellerLoginPage() {
               {isLoading ? "Memproses..." : "Login"}
             </Button>
           </form>
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            Belum punya akun reseller?{' '}
+            <button
+              type="button"
+              onClick={() => router.push("/reseller/register")}
+              className="font-medium text-primary underline"
+            >
+              Daftar sekarang
+            </button>
+          </div>
         </CardContent>
       </Card>
     </div>

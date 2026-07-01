@@ -39,7 +39,7 @@ export function ResellerReferralCard({ referralLink, referralCode }: ResellerRef
             <p className="text-sm font-medium mb-2">Link Referral Anda</p>
             <div className="flex gap-2">
               <Input value={referralLink} readOnly className="font-mono text-sm" />
-              <CopyButton value={referralLink} />
+              <CopyButton text={referralLink} />
             </div>
           </div>
 
@@ -47,7 +47,7 @@ export function ResellerReferralCard({ referralLink, referralCode }: ResellerRef
             <p className="text-sm font-medium mb-2">Kode Referral</p>
             <div className="flex gap-2">
               <Input value={referralCode} readOnly className="font-mono text-sm" />
-              <CopyButton value={referralCode} />
+              <CopyButton text={referralCode} />
             </div>
           </div>
 

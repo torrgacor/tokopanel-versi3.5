@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
+import { plans } from "@/data/plans"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -23,7 +24,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -86,6 +86,8 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
+  const resellerPlans = plans.filter((plan) => plan.type === "private" && plan.access === "regular")
+
   const addForm = useForm<PackageFormValues>({
     resolver: zodResolver(packageSchema),
     defaultValues: {
@@ -96,6 +98,16 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
       stock: "",
     },
   })
+
+  const selectedPlanId = addForm.watch("planId")
+
+  useEffect(() => {
+    const selectedPlan = resellerPlans.find((plan) => plan.id === selectedPlanId)
+    if (selectedPlan) {
+      addForm.setValue("planName", selectedPlan.name)
+      addForm.setValue("basePrice", selectedPlan.price.toString())
+    }
+  }, [selectedPlanId, addForm, resellerPlans])
 
   const editForm = useForm<StockFormValues>({
     resolver: zodResolver(stockSchema),
@@ -213,9 +225,19 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
                   name="planId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>ID Plan</FormLabel>
+                      <FormLabel>Pilih Paket</FormLabel>
                       <FormControl>
-                        <Input placeholder="Contoh: 1gb" {...field} />
+                        <select
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                          {...field}
+                        >
+                          <option value="">Pilih paket reseller</option>
+                          {resellerPlans.map((plan) => (
+                            <option key={plan.id} value={plan.id}>
+                              {plan.name} - {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(plan.price)}
+                            </option>
+                          ))}
+                        </select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -226,13 +248,7 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
                   control={addForm.control}
                   name="planName"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nama Plan</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Contoh: PANEL BOT 2GB" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <input type="hidden" {...field} />
                   )}
                 />
 
@@ -243,7 +259,7 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
                     <FormItem>
                       <FormLabel>Harga Dasar (Rp)</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="Harga dari admin" {...field} />
+                        <Input type="number" value={field.value} readOnly />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

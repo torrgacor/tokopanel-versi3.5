@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -39,6 +39,8 @@ export default function PanelForm() {
   const [modalType, setModalType] = useState<"success" | "error" | "info" | "loading">("info")
   const [modalTitle, setModalTitle] = useState("")
   const [modalMessage, setModalMessage] = useState("")
+  const searchParams = useSearchParams()
+  const [referrerId, setReferrerId] = useState<string | null>(null)
   
   // Voucher states
   const [appliedVoucher, setAppliedVoucher] = useState<{
@@ -66,6 +68,28 @@ export default function PanelForm() {
       // ignore (SSR safety)
     }
   }, [])
+
+  useEffect(() => {
+    if (!searchParams) return
+    const ref = searchParams.get("ref")
+    if (ref) {
+      setReferrerId(ref)
+      try {
+        localStorage.setItem("referrerId", ref)
+      } catch (e) {
+        // ignore
+      }
+    } else {
+      try {
+        const storedRef = localStorage.getItem("referrerId")
+        if (storedRef) {
+          setReferrerId(storedRef)
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [searchParams])
 
   // Persist serverType when it changes
   useEffect(() => {
@@ -234,6 +258,7 @@ export default function PanelForm() {
         selectedEggId, // Pass selected egg to payment
         voucherCode: appliedVoucher?.code, // Pass voucher code if applied
         quantity: quantity,
+        referrerId: referrerId ?? undefined,
       })
 
       if (!result.success) {
