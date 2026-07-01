@@ -299,6 +299,7 @@ export default function ResellerDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+      )}
     </div>
   )
 }
