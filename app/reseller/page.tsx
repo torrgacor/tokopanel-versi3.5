@@ -93,13 +93,11 @@ export default function ResellerDashboard() {
 
   return (
     <div className="container py-10 space-y-8">
-      {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-bold">Dashboard Reseller</h1>
         <p className="text-muted-foreground">Kelola penjualan dan komisi Anda</p>
       </div>
 
-      {/* Stats Grid */}
       {stats && <ResellerStatsGrid stats={stats} />}
 
       {!profile ? (
@@ -122,10 +120,8 @@ export default function ResellerDashboard() {
           <TabsTrigger value="settings">Pengaturan</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-8">
           <div className="grid gap-4 md:grid-cols-2">
-            {/* Wallet Card */}
             {profile && user && (
               <ResellerWalletCard
                 userId={user.userId}
@@ -134,7 +130,6 @@ export default function ResellerDashboard() {
               />
             )}
 
-            {/* Referral Card */}
             {referralLink && (
               <ResellerReferralCard
                 referralLink={referralLink}
@@ -143,7 +138,6 @@ export default function ResellerDashboard() {
             )}
           </div>
 
-          {/* Recent Sales */}
           {sales && sales.length > 0 && (
             <Card>
               <CardHeader>
@@ -173,7 +167,6 @@ export default function ResellerDashboard() {
             </Card>
           )}
 
-          {/* Commission History */}
           {commissions && commissions.length > 0 && (
             <Card>
               <CardHeader>
@@ -204,17 +197,14 @@ export default function ResellerDashboard() {
           )}
         </TabsContent>
 
-        {/* Sales Tab */}
         <TabsContent value="sales">
           <ResellerSalesTable sales={sales} />
         </TabsContent>
 
-        {/* Packages Tab */}
         <TabsContent value="packages">
           {user && <ResellerPackagesCard userId={user.userId} packages={packages} />}
         </TabsContent>
 
-        {/* Wallet Tab */}
         <TabsContent value="wallet" className="space-y-8">
           {profile && user && (
             <ResellerWalletCard
@@ -226,7 +216,6 @@ export default function ResellerDashboard() {
           <ResellerWithdrawalHistory withdrawals={withdrawals} />
         </TabsContent>
 
-        {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-8">
           {profile && (
             <Card>
