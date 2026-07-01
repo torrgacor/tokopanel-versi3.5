@@ -6,6 +6,7 @@ import { plans } from "@/data/plans"
 import { createPanel } from "./create-panel"
 import { appConfig } from "@/data/config"
 import { markVoucherAsUsed } from "./voucher-actions"
+import { recordResellerSale, applyResellerReferralCode } from "./reseller-actions"
 
 const API_ID = appConfig.pay.api_id
 const API_KEY = appConfig.pay.api_key
@@ -85,6 +86,27 @@ export async function checkPaymentStatus(transactionId: string) {
       if (!panelResult.success) {
         await updatePaymentStatus(transactionId, "failed")
         return { success: false, error: "Gagal membuat panel" }
+      }
+
+      if (payment.referrerId) {
+        const resellerSaleResult = await recordResellerSale(payment.referrerId, {
+          customerId: payment.email,
+          customerEmail: payment.email,
+          customerUsername: payment.username,
+          planId: payment.planId,
+          planName: plan.name,
+          salePrice: payment.amount,
+          transactionId,
+        })
+
+        if (!resellerSaleResult.success) {
+          console.warn(`Reseller sale recording failed: ${resellerSaleResult.error}`)
+        } else {
+          const referralResult = await applyResellerReferralCode(payment.referrerId, payment.username, payment.email)
+          if (!referralResult.success) {
+            console.warn(`Reseller referral bonus failed: ${referralResult.error}`)
+          }
+        }
       }
 
       // Mark voucher as used if provided

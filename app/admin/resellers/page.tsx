@@ -230,6 +230,8 @@ export default function AdminResellerPage() {
         <p className="text-muted-foreground">Kelola semua reseller dan verifikasi</p>
       </div>
 
+      <AdminNavigation />
+
       <Card>
         <CardHeader>
           <CardTitle>Daftar Reseller</CardTitle>

@@ -36,6 +36,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { toast } from "@/components/ui/use-toast"
+import { AdminNavigation } from "@/components/admin-navigation"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { Check, X, Clock } from "lucide-react"
@@ -204,6 +205,8 @@ export default function AdminWithdrawalsPage() {
         <h1 className="text-4xl font-bold">Manajemen Withdrawal</h1>
         <p className="text-muted-foreground">Kelola request penarikan saldo reseller</p>
       </div>
+
+      <AdminNavigation />
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">

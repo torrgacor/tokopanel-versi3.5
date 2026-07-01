@@ -35,6 +35,7 @@ export interface PaymentData {
   discountValue?: number
   discountAmount?: number
   quantity: number
+  referrerId?: string
   panelDetails?: {
     username: string
     password: string
@@ -51,6 +52,7 @@ export async function createPayment(data: {
   selectedEggId: number | null
   voucherCode?: string
   quantity: number
+  referrerId?: string
 }) {
   try {
     const { planId, username, email, serverType, accessType, quantity = 1 } = data
@@ -185,6 +187,7 @@ export async function createPayment(data: {
       discountType,
       discountValue,
       discountAmount,
+      referrerId: data.referrerId,
     }
 
     const client = await clientPromise

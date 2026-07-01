@@ -251,12 +251,21 @@ export async function recordResellerSale(
     const client = await mongoClient
     const db = client.db(appConfig.mongodb.dbName)
 
-    const reseller = await db.collection("resellers").findOne({ userId })
+    const query: any = { userId }
+    if (ObjectId.isValid(userId)) {
+      query.$or = [{ userId }, { _id: new ObjectId(userId) }]
+    }
+
+    const reseller = await db.collection("resellers").findOne(query)
     if (!reseller) {
       return { success: false, error: "Reseller tidak ditemukan" }
     }
 
-    const commission = saleData.salePrice * reseller.commissionRate
+    if (reseller.verificationStatus !== "verified") {
+      return { success: false, error: "Reseller belum terverifikasi" }
+    }
+
+    const commission = Math.round(saleData.salePrice * reseller.commissionRate)
 
     const sale: ResellerSale = {
       resellerId: reseller._id!.toString(),
@@ -507,25 +516,24 @@ export async function getResellerReferralLink(userId: string) {
 /**
  * Apply referral code ke reseller
  */
-export async function applyResellerReferralCode(userId: string, referralCode: string) {
+export async function applyResellerReferralCode(referrerId: string, customerUsername: string, customerEmail?: string) {
   try {
     const client = await mongoClient
     const db = client.db(appConfig.mongodb.dbName)
 
-    const referrer = await db.collection("resellers").findOne({
-      _id: new ObjectId(referralCode),
-    })
+    const query: any = {}
+    if (ObjectId.isValid(referrerId)) {
+      query._id = new ObjectId(referrerId)
+    } else {
+      query.userId = referrerId
+    }
+
+    const referrer = await db.collection("resellers").findOne(query)
 
     if (!referrer) {
       return { success: false, error: "Referral code tidak valid" }
     }
 
-    const customer = await db.collection("resellers").findOne({ userId })
-    if (!customer) {
-      return { success: false, error: "User tidak ditemukan" }
-    }
-
-    // Berikan bonus referral
     const bonusAmount = 10000 // Rp 10.000
     await db.collection("resellers").updateOne(
       { _id: referrer._id },
@@ -535,12 +543,11 @@ export async function applyResellerReferralCode(userId: string, referralCode: st
       }
     )
 
-    // Record bonus
     await db.collection("commission_history").insertOne({
       resellerId: referrer._id!.toString(),
       amount: bonusAmount,
       type: "bonus",
-      description: `Bonus referral dari ${customer.username}`,
+      description: `Bonus referral dari ${customerUsername}`,
       createdAt: new Date(),
     })
 

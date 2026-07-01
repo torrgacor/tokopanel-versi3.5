@@ -1,3 +1,4 @@
+import React, { Suspense } from "react"
 import PanelForm from "@/components/panel-form"
 import Navbar from "@/components/navbar"
 import { Card, CardContent } from "@/components/ui/card"
@@ -22,7 +23,9 @@ export default function Home() {
             <Card className="max-w-2xl mx-auto shadow-2xl border-dark-300 overflow-hidden animate-slide-up bg-dark-400">
               <div className="h-3 bg-gradient-to-r from-red-600 to-red-800"></div>
               <CardContent className="p-8">
-                <PanelForm />
+                <Suspense fallback={<LoadingScreen />}>
+                  <PanelForm />
+                </Suspense>
               </CardContent>
             </Card>
           </div>
