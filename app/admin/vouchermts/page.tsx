@@ -101,19 +101,35 @@ export default function AdminVoucherManagementPage() {
 
   const { toast } = useToast()
 
-  const handleLogout = () => {
-    window.localStorage.removeItem("adminAuthenticated")
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/auth/logout", {
+        method: "POST",
+      })
+    } catch (error) {
+      console.error("Failed to logout admin:", error)
+    }
     router.push("/admin")
   }
 
   useEffect(() => {
-    const authValue = window.localStorage.getItem("adminAuthenticated")
-    if (authValue === "true") {
-      setIsAuthenticated(true)
-    } else {
-      router.replace("/admin")
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/admin/withdrawals", { method: "GET" })
+        if (response.ok) {
+          setIsAuthenticated(true)
+        } else {
+          router.replace("/admin")
+        }
+      } catch (error) {
+        console.error("Admin auth check failed:", error)
+        router.replace("/admin")
+      } finally {
+        setIsCheckingAuth(false)
+      }
     }
-    setIsCheckingAuth(false)
+
+    checkAuth()
   }, [router])
 
   // Load data

@@ -7,10 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-const ADMIN_EMAIL = "akuntorry01@gmail.com"
-const ADMIN_PASSWORD = "151515"
-const ADMIN_AUTH_KEY = "adminAuthenticated"
-
 export default function AdminLoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
@@ -18,19 +14,31 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError("")
     setIsSubmitting(true)
 
-    if (email.trim().toLowerCase() !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
-      setError("Email atau password salah")
-      setIsSubmitting(false)
-      return
-    }
+    try {
+      const response = await fetch("/api/admin/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await response.json()
 
-    window.localStorage.setItem(ADMIN_AUTH_KEY, "true")
-    router.push("/admin/vouchermts")
+      if (!data.success) {
+        setError(data.error || "Email atau password salah")
+        setIsSubmitting(false)
+        return
+      }
+
+      router.push("/admin/vouchermts")
+    } catch (error) {
+      console.error(error)
+      setError("Gagal login admin")
+      setIsSubmitting(false)
+    }
   }
 
   return (

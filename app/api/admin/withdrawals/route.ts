@@ -2,15 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import mongoClient from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 import { appConfig } from "@/data/config"
-
-function isAdminAuthorized(request: NextRequest) {
-  const adminCookie = request.cookies.get("adminAuth")?.value
-  const headerToken = request.headers.get("x-admin-token")
-  const adminSecret = process.env.ADMIN_SECRET || ""
-
-  if (!adminSecret) return false
-  return adminCookie === adminSecret || headerToken === adminSecret
-}
+import { isAdminAuthorized } from "@/app/api/admin/auth/utils"
 
 /**
  * GET /api/admin/withdrawals

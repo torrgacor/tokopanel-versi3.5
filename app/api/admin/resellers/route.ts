@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import mongoClient from "@/lib/mongodb"
 import { appConfig } from "@/data/config"
+import { isAdminAuthorized } from "@/app/api/admin/auth/utils"
 
 /**
  * GET /api/admin/resellers
  * Ambil daftar semua reseller
  */
 export async function GET(request: NextRequest) {
+  if (!isAdminAuthorized(request)) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+  }
   try {
     const client = await mongoClient
     const db = client.db(appConfig.mongodb.dbName)

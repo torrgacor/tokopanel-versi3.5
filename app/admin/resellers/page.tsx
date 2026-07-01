@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -60,8 +61,11 @@ type CommissionFormValues = z.infer<typeof commissionSchema>
 type RejectFormValues = z.infer<typeof rejectSchema>
 
 export default function AdminResellerPage() {
+  const router = useRouter()
   const [resellers, setResellers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [selectedReseller, setSelectedReseller] = useState<any>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [isActionLoading, setIsActionLoading] = useState(false)
@@ -77,22 +81,29 @@ export default function AdminResellerPage() {
   })
 
   useEffect(() => {
-    const loadResellers = async () => {
+    const init = async () => {
       try {
-        const response = await fetch("/api/admin/resellers")
-        const data = await response.json()
+        const authResponse = await fetch("/api/admin/resellers")
+        if (authResponse.status === 401) {
+          router.replace("/admin")
+          return
+        }
+
+        const data = await authResponse.json()
         if (data.success) {
           setResellers(data.data)
+          setIsAuthenticated(true)
         }
       } catch (error) {
         console.error("Error loading resellers:", error)
       } finally {
         setIsLoading(false)
+        setIsCheckingAuth(false)
       }
     }
 
-    loadResellers()
-  }, [])
+    init()
+  }, [router])
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -197,15 +208,19 @@ export default function AdminResellerPage() {
     }
   }
 
-  if (isLoading) {
+  if (isCheckingAuth) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Memuat data reseller...</p>
+          <p>Memeriksa autentikasi...</p>
         </div>
       </div>
     )
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   return (

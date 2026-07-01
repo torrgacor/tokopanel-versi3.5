@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -51,6 +52,7 @@ type ApproveFormValues = z.infer<typeof approveSchema>
 type RejectFormValues = z.infer<typeof rejectSchema>
 
 export default function AdminWithdrawalsPage() {
+  const router = useRouter()
   const [withdrawals, setWithdrawals] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<any>(null)
@@ -69,23 +71,28 @@ export default function AdminWithdrawalsPage() {
   })
 
   useEffect(() => {
-    loadWithdrawals()
-  }, [])
+    const init = async () => {
+      try {
+        const response = await fetch("/api/admin/withdrawals")
+        if (response.status === 401) {
+          router.replace("/admin")
+          return
+        }
 
-  const loadWithdrawals = async () => {
-    try {
-      const response = await fetch("/api/admin/withdrawals")
-      const data = await response.json()
-      if (data.success) {
-        setWithdrawals(data.data)
+        const data = await response.json()
+        if (data.success) {
+          setWithdrawals(data.data)
+        }
+      } catch (error) {
+        console.error("Error loading withdrawals:", error)
+        toast({ title: "Error", description: "Gagal memuat data withdrawal", variant: "destructive" })
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error("Error loading withdrawals:", error)
-      toast({ title: "Error", description: "Gagal memuat data withdrawal", variant: "destructive" })
-    } finally {
-      setIsLoading(false)
     }
-  }
+
+    init()
+  }, [router])
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("id-ID", {

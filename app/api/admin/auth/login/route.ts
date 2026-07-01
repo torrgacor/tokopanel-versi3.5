@@ -3,14 +3,15 @@ import { NextRequest, NextResponse } from "next/server"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { password } = body
+    const { email, password } = body
 
+    const adminEmail = process.env.ADMIN_EMAIL || ""
     const adminSecret = process.env.ADMIN_SECRET || ""
-    if (!adminSecret) {
+    if (!adminEmail || !adminSecret) {
       return NextResponse.json({ success: false, error: "Admin not configured" }, { status: 500 })
     }
 
-    if (password !== adminSecret) {
+    if (email?.trim().toLowerCase() !== adminEmail.toLowerCase() || password !== adminSecret) {
       return NextResponse.json({ success: false, error: "Invalid credentials" }, { status: 401 })
     }
 
