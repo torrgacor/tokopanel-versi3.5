@@ -36,6 +36,8 @@ export interface PaymentData {
   discountAmount?: number
   quantity: number
   referrerId?: string
+  resellerPackageId?: string
+  salePrice?: number
   panelDetails?: {
     username: string
     password: string
@@ -53,9 +55,10 @@ export async function createPayment(data: {
   voucherCode?: string
   quantity: number
   referrerId?: string
+  resellerPackageId?: string
 }) {
   try {
-    const { planId, username, email, serverType, accessType, quantity = 1 } = data
+    const { planId, username, email, serverType, accessType, quantity = 1, resellerPackageId } = data
 
     const SAKURU_API_ID = appConfig.pay.api_id
     const SAKURU_API_KEY = appConfig.pay.api_key
@@ -80,7 +83,35 @@ export async function createPayment(data: {
       throw new Error("Plan tidak sesuai dengan tipe server atau akses")
     }
 
-    const basePrice = (plan.price + eggPrice) * quantity 
+    let usePrice = plan.price
+    let resellerPackageIdValue: string | undefined
+    let basePrice = plan.price
+
+    if (resellerPackageId) {
+      const client = await clientPromise
+      const db = client.db(appConfig.mongodb.dbName)
+      const resellerPackage = await db
+        .collection("reseller_packages")
+        .findOne({ _id: new ObjectId(resellerPackageId) })
+
+      if (!resellerPackage) {
+        throw new Error("Reseller package tidak ditemukan")
+      }
+
+      if (!data.referrerId || resellerPackage.resellerId !== data.referrerId) {
+        throw new Error("Reseller package tidak valid untuk referral ini")
+      }
+
+      if (resellerPackage.resellPrice < resellerPackage.basePrice) {
+        throw new Error("Harga jual reseller tidak boleh lebih rendah dari harga dasar")
+      }
+
+      usePrice = resellerPackage.resellPrice
+      basePrice = resellerPackage.basePrice
+      resellerPackageIdValue = resellerPackageId
+    }
+
+    const baseAmount = (usePrice + eggPrice) * quantity
     
     // Handle voucher if provided
     let discountAmount = 0
@@ -95,18 +126,18 @@ export async function createPayment(data: {
         const voucher = voucherValidation.voucher
         voucherCode = voucher.code
         voucherDownloadUrl = voucher.downloadUrl
-        if (voucher.minimumPurchase && basePrice < voucher.minimumPurchase) {
+        if (voucher.minimumPurchase && baseAmount < voucher.minimumPurchase) {
           throw new Error(`Voucher ini berlaku untuk pembelian minimal ${formatRupiah(voucher.minimumPurchase)}`)
         }
         discountType = voucher.discountType
         discountValue = voucher.discountValue
-        discountAmount = calculateDiscount(basePrice, discountType, discountValue)
+        discountAmount = calculateDiscount(baseAmount, discountType, discountValue)
       } else {
         throw new Error(`Voucher tidak valid: ${voucherValidation.message}`)
       }
     }
     
-    const nominal = Math.max(0, basePrice - discountAmount)
+    const nominal = Math.max(0, baseAmount - discountAmount)
     const transactionId = generateTransactionId()
     const method = "QRIS2"
     const internalFee = calculateFee(nominal)
@@ -129,7 +160,7 @@ export async function createPayment(data: {
     bodyData.append("expired", "24")
     bodyData.append("produk[]", plan.name)
     bodyData.append("qty[]", quantity.toString())
-    bodyData.append("harga[]", basePrice.toString())
+    bodyData.append("harga[]", baseAmount.toString())
     bodyData.append(
       "callback_url",
       "https://panelshopv3.mts4you.biz.id/callback"
@@ -174,6 +205,7 @@ export async function createPayment(data: {
       serverType,
       accessType,
       amount: nominal,
+      salePrice: baseAmount,
       fee: pay.fee + internalFee,
       total: pay.total,
       qrImageUrl: pay.qr,
@@ -188,6 +220,7 @@ export async function createPayment(data: {
       discountValue,
       discountAmount,
       referrerId: data.referrerId,
+      resellerPackageId: resellerPackageIdValue,
     }
 
     const client = await clientPromise

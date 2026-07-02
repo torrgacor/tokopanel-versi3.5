@@ -7,6 +7,8 @@ import { createPanel } from "./create-panel"
 import { appConfig } from "@/data/config"
 import { markVoucherAsUsed } from "./voucher-actions"
 import { recordResellerSale, applyResellerReferralCode } from "./reseller-actions"
+import clientPromise from "@/lib/mongodb"
+import { ObjectId } from "mongodb"
 
 const API_ID = appConfig.pay.api_id
 const API_KEY = appConfig.pay.api_key
@@ -89,15 +91,35 @@ export async function checkPaymentStatus(transactionId: string) {
       }
 
       if (payment.referrerId) {
-        const resellerSaleResult = await recordResellerSale(payment.referrerId, {
+        const client = await clientPromise
+        const db = client.db(appConfig.mongodb.dbName)
+
+        let basePrice = plan.price
+        const saleData: any = {
           customerId: payment.email,
           customerEmail: payment.email,
           customerUsername: payment.username,
           planId: payment.planId,
           planName: plan.name,
-          salePrice: payment.amount,
+          salePrice: payment.salePrice ?? payment.amount,
           transactionId,
-        })
+        }
+
+        if (payment.resellerPackageId) {
+          const packageData = await db
+            .collection("reseller_packages")
+            .findOne({ _id: new ObjectId(payment.resellerPackageId) })
+
+          if (packageData) {
+            basePrice = packageData.basePrice
+            saleData.basePrice = packageData.basePrice
+            saleData.resellerPackageId = payment.resellerPackageId
+          }
+        }
+
+        saleData.basePrice = saleData.basePrice ?? basePrice
+
+        const resellerSaleResult = await recordResellerSale(payment.referrerId, saleData)
 
         if (!resellerSaleResult.success) {
           console.warn(`Reseller sale recording failed: ${resellerSaleResult.error}`)

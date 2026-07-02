@@ -41,6 +41,14 @@ export default function PanelForm() {
   const [modalMessage, setModalMessage] = useState("")
   const searchParams = useSearchParams()
   const [referrerId, setReferrerId] = useState<string | null>(null)
+  const [selectedResellerPackage, setSelectedResellerPackage] = useState<{
+    _id: string
+    planId: string
+    planName: string
+    basePrice: number
+    resellPrice: number
+  } | null>(null)
+  const [resellerPackageId, setResellerPackageId] = useState<string | null>(null)
   
   // Voucher states
   const [appliedVoucher, setAppliedVoucher] = useState<{
@@ -72,6 +80,9 @@ export default function PanelForm() {
   useEffect(() => {
     if (!searchParams) return
     const ref = searchParams.get("ref")
+    const resellerPackageId = searchParams.get("resellerPackageId")
+    const packageId = searchParams.get("package")
+
     if (ref) {
       setReferrerId(ref)
       try {
@@ -87,6 +98,17 @@ export default function PanelForm() {
         }
       } catch (e) {
         // ignore
+      }
+    }
+
+    if (resellerPackageId) {
+      setResellerPackageId(resellerPackageId)
+    }
+
+    if (packageId) {
+      const plan = plans.find((plan) => plan.id === packageId)
+      if (plan) {
+        setSelectedPlan(packageId)
       }
     }
   }, [searchParams])
@@ -133,11 +155,31 @@ export default function PanelForm() {
     }
   }, [selectedPlan])
 
+  useEffect(() => {
+    const loadResellerPackage = async () => {
+      if (!resellerPackageId) return
+
+      try {
+        const response = await fetch(`/api/reseller/package/${resellerPackageId}`)
+        const data = await response.json()
+        if (data.success && data.data) {
+          setSelectedResellerPackage(data.data)
+          setSelectedPlan(data.data.planId)
+        }
+      } catch (error) {
+        console.error("Error loading reseller package:", error)
+      }
+    }
+
+    loadResellerPackage()
+  }, [resellerPackageId])
+
   // Fetch eggs when needed
   const fetchEggs = async () => {
     setIsLoadingEggs(true)
     try {
-      const pterodactyl = new Pterodactyl(serverType, accessType)
+      const pterodactylAccessType = accessType === "admin" ? "admin" : "reguler"
+      const pterodactyl = new Pterodactyl(serverType, pterodactylAccessType)
       const eggList = await pterodactyl.getEggs()
       setEggs(eggList)
     } catch (error) {
@@ -227,13 +269,13 @@ export default function PanelForm() {
     }
   }
 
-  const handleAdvancedConfirm = async (eggId?: number, qty: number) => {
-    setSelectedEggId(eggId)
-    setQuantity(qty)
+  const handleAdvancedConfirm = (selectedEggId: number | undefined, quantity: number) => {
+    setSelectedEggId(selectedEggId)
+    setQuantity(quantity)
     setShowAdvancedSettings(false)
     // Store egg selection in localStorage for the payment process
-    if (eggId) {
-      localStorage.setItem(`selectedEgg_${serverType}_${accessType}`, eggId.toString())
+    if (selectedEggId !== undefined) {
+      localStorage.setItem(`selectedEgg_${serverType}_${accessType}`, selectedEggId.toString())
     }
     setShowConfirmation(true)
   }
@@ -255,10 +297,11 @@ export default function PanelForm() {
         email,
         serverType,
         accessType,
-        selectedEggId, // Pass selected egg to payment
+        selectedEggId: selectedEggId ?? null, // Pass selected egg to payment
         voucherCode: appliedVoucher?.code, // Pass voucher code if applied
         quantity: quantity,
         referrerId: referrerId ?? undefined,
+        resellerPackageId: selectedResellerPackage?._id,
       })
 
       if (!result.success) {
@@ -282,7 +325,7 @@ export default function PanelForm() {
   
   // Get selected plan price
   const selectedPlanData = plans.find(p => p.id === selectedPlan)
-  const selectedPlanPrice = selectedPlanData?.price || 0
+  const selectedPlanPrice = selectedResellerPackage ? selectedResellerPackage.resellPrice : selectedPlanData?.price || 0
 
   return (
     <>

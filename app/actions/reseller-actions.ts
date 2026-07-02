@@ -108,6 +108,18 @@ export async function getResellerProfile(userId: string) {
   }
 }
 
+export async function getResellerProfileById(resellerId: string) {
+  try {
+    const client = await mongoClient
+    const db = client.db(appConfig.mongodb.dbName)
+    const reseller = await db.collection("resellers").findOne({ _id: new ObjectId(resellerId) })
+    return reseller || null
+  } catch (error) {
+    console.error("Get reseller profile by ID error:", error)
+    return null
+  }
+}
+
 /**
  * Update reseller profile
  */
@@ -158,6 +170,10 @@ export async function addResellerPackage(
       return { success: false, error: "Reseller tidak ditemukan" }
     }
 
+    if (packageData.resellPrice < packageData.basePrice) {
+      return { success: false, error: "Harga jual harus sama atau lebih besar dari harga dasar" }
+    }
+
     const markup = ((packageData.resellPrice - packageData.basePrice) / packageData.basePrice) * 100
 
     const package_: ResellerPackage = {
@@ -205,6 +221,39 @@ export async function getResellerPackages(userId: string) {
   }
 }
 
+export async function getResellerPackagesByResellerId(resellerId: string) {
+  try {
+    const client = await mongoClient
+    const db = client.db(appConfig.mongodb.dbName)
+
+    const packages = await db
+      .collection("reseller_packages")
+      .find({ resellerId })
+      .toArray()
+
+    return packages
+  } catch (error) {
+    console.error("Get reseller packages by reseller ID error:", error)
+    return []
+  }
+}
+
+export async function getResellerPackageById(packageId: string) {
+  try {
+    const client = await mongoClient
+    const db = client.db(appConfig.mongodb.dbName)
+
+    const packageData = await db
+      .collection("reseller_packages")
+      .findOne({ _id: new ObjectId(packageId) })
+
+    return packageData
+  } catch (error) {
+    console.error("Get reseller package by ID error:", error)
+    return null
+  }
+}
+
 /**
  * Update package stock
  */
@@ -239,7 +288,9 @@ export async function recordResellerSale(
     planId: string
     planName: string
     salePrice: number
+    basePrice: number
     transactionId: string
+    resellerPackageId?: string
     panelDetails?: {
       username: string
       password: string
@@ -265,7 +316,7 @@ export async function recordResellerSale(
       return { success: false, error: "Reseller belum terverifikasi" }
     }
 
-    const commission = Math.round(saleData.salePrice * reseller.commissionRate)
+    const commission = Math.max(0, Math.round(saleData.salePrice - saleData.basePrice))
 
     const sale: ResellerSale = {
       resellerId: reseller._id!.toString(),
@@ -275,6 +326,8 @@ export async function recordResellerSale(
       planId: saleData.planId,
       planName: saleData.planName,
       salePrice: saleData.salePrice,
+      basePrice: saleData.basePrice,
+      resellerPackageId: saleData.resellerPackageId,
       commission,
       commissionRate: reseller.commissionRate,
       status: "completed",
@@ -504,7 +557,7 @@ export async function getResellerReferralLink(userId: string) {
     if (!reseller) return null
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-    const referralLink = `${baseUrl}?ref=${reseller._id!.toString()}`
+    const referralLink = `${baseUrl}/reseller/${reseller._id!.toString()}`
 
     return referralLink
   } catch (error) {

@@ -49,6 +49,8 @@ export interface ResellerSale {
   planId: string
   planName: string
   salePrice: number
+  basePrice: number
+  resellerPackageId?: string
   commission: number // Komisi yang didapat
   commissionRate: number // Rate komisi saat itu
   status: "pending" | "completed" | "cancelled"

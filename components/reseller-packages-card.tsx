@@ -41,7 +41,11 @@ const packageSchema = z.object({
   planId: z.string().min(1, "Plan harus dipilih"),
   planName: z.string().min(1, "Nama plan harus diisi"),
   basePrice: z.string().refine((val) => !isNaN(parseFloat(val)), "Harga dasar harus berupa angka"),
-  resellPrice: z.string().refine((val) => !isNaN(parseFloat(val)), "Harga jual harus berupa angka"),
+  resellPrice: z.string().refine((val) => !isNaN(parseFloat(val)), "Harga jual harus berupa angka").refine((val, ctx) => {
+    const basePrice = parseFloat(ctx.parent.basePrice)
+    const resellPrice = parseFloat(val)
+    return !isNaN(basePrice) && !isNaN(resellPrice) && resellPrice >= basePrice
+  }, "Harga jual harus sama atau lebih besar dari harga dasar"),
   stock: z.string().refine(
     (val) => {
       const num = parseInt(val)
