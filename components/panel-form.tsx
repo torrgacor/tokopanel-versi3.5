@@ -21,7 +21,20 @@ import { Pterodactyl, EggOption } from "@/lib/pterodactyl"
 import { VoucherInput } from "./voucher-input"
 import type { DiscountType } from "@/app/actions/voucher-actions"
 
-export default function PanelForm() {
+interface ResellerPackageOption {
+  _id: string
+  planId: string
+  planName: string
+  basePrice: number
+  resellPrice: number
+}
+
+interface PanelFormProps {
+  initialReferrerId?: string
+  initialResellerPackage?: ResellerPackageOption
+}
+
+export default function PanelForm({ initialReferrerId, initialResellerPackage }: PanelFormProps) {
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [selectedPlan, setSelectedPlan] = useState("")
@@ -40,15 +53,9 @@ export default function PanelForm() {
   const [modalTitle, setModalTitle] = useState("")
   const [modalMessage, setModalMessage] = useState("")
   const searchParams = useSearchParams()
-  const [referrerId, setReferrerId] = useState<string | null>(null)
-  const [selectedResellerPackage, setSelectedResellerPackage] = useState<{
-    _id: string
-    planId: string
-    planName: string
-    basePrice: number
-    resellPrice: number
-  } | null>(null)
-  const [resellerPackageId, setResellerPackageId] = useState<string | null>(null)
+  const [referrerId, setReferrerId] = useState<string | null>(initialReferrerId ?? null)
+  const [selectedResellerPackage, setSelectedResellerPackage] = useState<ResellerPackageOption | null>(initialResellerPackage ?? null)
+  const [resellerPackageId, setResellerPackageId] = useState<string | null>(initialResellerPackage?._id ?? null)
   
   // Voucher states
   const [appliedVoucher, setAppliedVoucher] = useState<{
@@ -90,7 +97,7 @@ export default function PanelForm() {
       } catch (e) {
         // ignore
       }
-    } else {
+    } else if (!initialReferrerId) {
       try {
         const storedRef = localStorage.getItem("referrerId")
         if (storedRef) {
@@ -157,7 +164,7 @@ export default function PanelForm() {
 
   useEffect(() => {
     const loadResellerPackage = async () => {
-      if (!resellerPackageId) return
+      if (!resellerPackageId || initialResellerPackage) return
 
       try {
         const response = await fetch(`/api/reseller/package/${resellerPackageId}`)
@@ -172,7 +179,16 @@ export default function PanelForm() {
     }
 
     loadResellerPackage()
-  }, [resellerPackageId])
+  }, [resellerPackageId, initialResellerPackage])
+
+  useEffect(() => {
+    if (!selectedResellerPackage) return
+    const plan = plans.find((p) => p.id === selectedResellerPackage.planId)
+    if (!plan) return
+    setServerType(plan.type)
+    setAccessType(plan.access)
+    setSelectedPlan(selectedResellerPackage.planId)
+  }, [selectedResellerPackage])
 
   // Fetch eggs when needed
   const fetchEggs = async () => {
@@ -324,7 +340,7 @@ export default function PanelForm() {
   const filteredPlans = plans.filter((p) => p.type === serverType && p.access === accessType)
   
   // Get selected plan price
-  const selectedPlanData = plans.find(p => p.id === selectedPlan)
+  const selectedPlanData = plans.find((p) => p.id === selectedPlan)
   const selectedPlanPrice = selectedResellerPackage ? selectedResellerPackage.resellPrice : selectedPlanData?.price || 0
 
   return (
@@ -497,15 +513,36 @@ export default function PanelForm() {
             </>
           )}
           </div>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={serverType}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-3"
-            >
+          {selectedResellerPackage ? (
+            <div className="rounded-3xl border border-red-500/20 bg-red-500/5 p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Paket reseller terpilih</p>
+                  <h3 className="text-xl font-semibold text-white">{selectedResellerPackage.planName}</h3>
+                  <p className="text-sm text-muted-foreground">Harga reseller: Rp {selectedResellerPackage.resellPrice.toLocaleString("id-ID")}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedResellerPackage(null)
+                    setResellerPackageId(null)
+                  }}
+                >
+                  Ubah Paket
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={serverType}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-3"
+              >
               {filteredPlans.length === 0 ? (
                 <div className="col-span-1 md:col-span-2 text-center text-gray-400 py-6">
                   Tidak ada paket untuk tipe server ini.
@@ -597,6 +634,7 @@ export default function PanelForm() {
               )}
             </motion.div>
           </AnimatePresence>
+          )}
       </form>
 
       {/* Floating Button - Only show when plan is selected */}

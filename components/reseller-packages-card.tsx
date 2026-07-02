@@ -34,7 +34,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { toast } from "@/components/ui/use-toast"
-import { addResellerPackage, updatePackageStock } from "@/app/actions/reseller-actions"
+import { addResellerPackage, updatePackageStock, updateResellerPackagePrice } from "@/app/actions/reseller-actions"
 import { Plus, Edit2 } from "lucide-react"
 
 const packageSchema = z.object({
@@ -49,13 +49,14 @@ const packageSchema = z.object({
   stock: z.string().refine(
     (val) => {
       const num = parseInt(val)
-      return !isNaN(num) && num > 0
+      return !isNaN(num) && num >= 0
     },
-    "Stok harus berupa angka positif"
+    "Stok harus berupa angka"
   ),
 })
 
-const stockSchema = z.object({
+const editSchema = z.object({
+  resellPrice: z.string().refine((val) => !isNaN(parseFloat(val)), "Harga jual harus berupa angka"),
   stock: z.string().refine(
     (val) => {
       const num = parseInt(val)
@@ -66,7 +67,7 @@ const stockSchema = z.object({
 })
 
 type PackageFormValues = z.infer<typeof packageSchema>
-type StockFormValues = z.infer<typeof stockSchema>
+type EditFormValues = z.infer<typeof editSchema>
 
 interface Package {
   _id: string
@@ -99,7 +100,7 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
       planName: "",
       basePrice: "",
       resellPrice: "",
-      stock: "",
+      stock: "0",
     },
   })
 
@@ -113,9 +114,10 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
     }
   }, [selectedPlanId, addForm, resellerPlans])
 
-  const editForm = useForm<StockFormValues>({
-    resolver: zodResolver(stockSchema),
+  const editForm = useForm<EditFormValues>({
+    resolver: zodResolver(editSchema),
     defaultValues: {
+      resellPrice: "",
       stock: "",
     },
   })
@@ -169,17 +171,21 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
     }
   }
 
-  const onEditSubmit = async (values: StockFormValues) => {
+  const onEditSubmit = async (values: EditFormValues) => {
     if (!selectedPackage) return
 
     setIsLoading(true)
     try {
-      const result = await updatePackageStock(selectedPackage._id, parseInt(values.stock))
+      const result = await updateResellerPackagePrice(selectedPackage._id, parseFloat(values.resellPrice))
 
       if (result.success) {
+        const stockResult = await updatePackageStock(selectedPackage._id, parseInt(values.stock))
+        if (!stockResult.success) {
+          throw new Error("Gagal update stok")
+        }
         toast({
           title: "Berhasil",
-          description: "Stok berhasil diupdate",
+          description: "Harga dan stok berhasil diupdate",
         })
         editForm.reset()
         setIsEditOpen(false)
@@ -187,14 +193,14 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
       } else {
         toast({
           title: "Gagal",
-          description: "Gagal update stok",
+          description: result.error || "Gagal update paket",
           variant: "destructive",
         })
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Terjadi kesalahan",
+        description: error instanceof Error ? error.message : "Terjadi kesalahan",
         variant: "destructive",
       })
     } finally {
@@ -260,13 +266,7 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
                   control={addForm.control}
                   name="basePrice"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Harga Dasar (Rp)</FormLabel>
-                      <FormControl>
-                        <Input type="number" value={field.value} readOnly />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <input type="hidden" {...field} />
                   )}
                 />
 
@@ -275,9 +275,9 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
                   name="resellPrice"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Harga Jual (Rp)</FormLabel>
+                      <FormLabel>Harga Jual</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="Harga untuk dijual" {...field} />
+                        <Input type="number" placeholder="Masukkan harga jual reseller" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -349,6 +349,7 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
                             size="sm"
                             onClick={() => {
                               setSelectedPackage(pkg)
+                              editForm.setValue("resellPrice", pkg.resellPrice.toString())
                               editForm.setValue("stock", pkg.stock.toString())
                             }}
                           >
@@ -357,12 +358,25 @@ export function ResellerPackagesCard({ userId, packages }: ResellerPackagesProps
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Update Stok</DialogTitle>
-                            <DialogDescription>Ubah stok untuk {pkg.planName}</DialogDescription>
+                            <DialogTitle>Ubah Harga dan Stok</DialogTitle>
+                            <DialogDescription>Perbarui paket reseller {pkg.planName}</DialogDescription>
                           </DialogHeader>
 
                           <Form {...editForm}>
                             <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+                              <FormField
+                                control={editForm.control}
+                                name="resellPrice"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Harga Jual Baru</FormLabel>
+                                    <FormControl>
+                                      <Input type="number" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
                               <FormField
                                 control={editForm.control}
                                 name="stock"

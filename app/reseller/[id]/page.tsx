@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { formatRupiah } from "@/lib/utils"
 import { Package } from "lucide-react"
+import { ResellerOrderSection } from "@/components/reseller-order-section"
 
 interface ResellerPageProps {
   params: {
@@ -43,37 +44,17 @@ export default async function ResellerStorefrontPage({ params }: ResellerPagePro
               <p className="text-sm text-muted-foreground mt-1">Saldo komisi: Rp {reseller.walletBalance.toLocaleString("id-ID")}</p>
             </div>
 
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Paket Penawaran</h2>
-              {packages.length === 0 ? (
-                <p className="text-muted-foreground">Tidak ada paket yang tersedia saat ini.</p>
-              ) : (
-                <div className="grid gap-4">
-                  {packages.map((pkg: any) => (
-                    <Card key={pkg._id} className="border">
-                      <CardContent className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-muted-foreground">{pkg.planName}</p>
-                            <p className="text-xl font-semibold">Rp {pkg.resellPrice.toLocaleString("id-ID")}</p>
-                          </div>
-                          <Package className="h-6 w-6 text-red-500" />
-                        </div>
-                        <p className="text-sm text-muted-foreground">Harga dasar: Rp {pkg.basePrice.toLocaleString("id-ID")}</p>
-                        <p className="text-sm text-muted-foreground">Markup: {pkg.markup.toFixed(1)}%</p>
-                        <p className="text-sm text-muted-foreground">Stok tersisa: {pkg.stock}</p>
-                        <Button
-                          asChild
-                          className="w-full"
-                        >
-                          <a href={`/?ref=${reseller._id!.toString()}&package=${pkg.planId}&resellerPackageId=${pkg._id}`}>Beli Sekarang</a>
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
+            <ResellerOrderSection
+              resellerId={reseller._id!.toString()}
+              resellerBusinessName={reseller.businessName}
+              packages={packages.map((pkg: any) => ({
+                _id: pkg._id,
+                planId: pkg.planId,
+                planName: pkg.planName,
+                basePrice: pkg.basePrice,
+                resellPrice: pkg.resellPrice,
+              }))}
+            />
           </CardContent>
         </Card>
 

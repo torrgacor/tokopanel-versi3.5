@@ -276,6 +276,36 @@ export async function updatePackageStock(packageId: string, newStock: number) {
   }
 }
 
+export async function updateResellerPackagePrice(packageId: string, newPrice: number) {
+  try {
+    const client = await mongoClient
+    const db = client.db(appConfig.mongodb.dbName)
+
+    const existingPackage = await db.collection("reseller_packages").findOne({ _id: new ObjectId(packageId) })
+    if (!existingPackage) {
+      return { success: false, error: "Package tidak ditemukan" }
+    }
+
+    const markup = ((newPrice - existingPackage.basePrice) / existingPackage.basePrice) * 100
+
+    const result = await db.collection("reseller_packages").updateOne(
+      { _id: new ObjectId(packageId) },
+      {
+        $set: {
+          resellPrice: newPrice,
+          markup,
+          updatedAt: new Date(),
+        },
+      }
+    )
+
+    return { success: result.modifiedCount > 0 }
+  } catch (error) {
+    console.error("Update reseller package price error:", error)
+    return { success: false, error: "Gagal update harga package" }
+  }
+}
+
 /**
  * Record sale untuk reseller
  */
